@@ -5,8 +5,10 @@
 # file the change never touches.
 #
 # Two details doing real work:
-#  - the instruction in `content` to trace the queryset's origin before
-#    reporting. Without it the rule matches on the loop and flags safe code.
+#  - the split between `content` and the examples: `content` only warns that the
+#    origin is often in another module; the instruction to go read it sits with
+#    the conditions in both example fields, which is where the decision is made.
+#    Drop either half and the rule matches on the loop and flags safe code.
 #  - the carve-outs in `good_examples`. Every case that should pass is named
 #    there, which is the only reason this rule stays quiet on them.
 #
