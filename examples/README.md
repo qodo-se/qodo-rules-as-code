@@ -6,27 +6,20 @@ into `rules/`, adjust it, open a PR.
 Directories match the `category:` field, so browse by the category you are
 writing for.
 
-| Rule | Category | Severity | State |
-|---|---|---|---|
-| `noqa-prohibited-suppressions` | Maintainability | error | worked through |
-| `noqa-conditional-suppressions` | Maintainability | warning | worked through |
-| `no-n-plus-one-queries` | Performance | error | worked through |
-| `never-hardcode-secrets` | Security | error | shape only |
-| `no-floating-point-for-money` | Correctness | error | shape only |
-| `outbound-calls-must-set-a-timeout` | Reliability | error | shape only |
-| `log-errors-with-correlation-id` | Observability | warning | shape only |
-| `cover-new-branches-with-tests` | Testability | warning | shape only |
-| `scoped-example-no-direct-sql-in-handlers` | Architecture | recommendation | shape only, also demos `scopes:` |
+| Rule | Category | Severity |
+|---|---|---|
+| `noqa-prohibited-suppressions` | Maintainability | error |
+| `noqa-conditional-suppressions` | Maintainability | warning |
+| `no-n-plus-one-queries` | Performance | error |
 
-**Worked through** means the criteria have been exercised against real diffs, and
-the file's header notes which details are doing the work. **Shape only** means
-correct in form but thin: they show the ideal case and little else, so a reviewer
-has nothing to pass over. Tighten before adopting.
+Each has been exercised against real diffs — including cases that must produce
+**silence** — and its header notes which details are doing the work. Rules that
+have not been through that are in `drafts/`, not here.
 
 ## Three shapes worth knowing
 
-The three worked-through examples are each a different shape, and the shape
-decides where the rule's substance goes:
+These three are each a different shape, and the shape decides where the rule's
+substance goes:
 
 - **An absolute ban on a pattern** — decidable from the changed lines alone.
   One condition. `noqa-prohibited-suppressions`.
