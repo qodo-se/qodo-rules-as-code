@@ -208,23 +208,50 @@ class TestIsExample(unittest.TestCase):
         self.assertFalse(is_example(write(VALID)))
 
 
+def shipped_rule_files():
+    """Every rule file this repo ships as reference material.
+
+    `rules/` is deliberately empty for a consumer — it holds only `_template`
+    until they add their own — so the shipped rules are the validated ones in
+    `examples/<category>/` plus the shape-only ones in `drafts/`. Both must stay
+    loadable: a consumer copies them into `rules/` verbatim.
+    """
+    root = Path(__file__).resolve().parent.parent
+    return sorted(
+        p
+        for d in ("examples", "drafts", "rules")
+        for p in (root / d).rglob("*.yaml")
+        if not p.name.startswith("_")
+    )
+
+
 class TestShippedRules(unittest.TestCase):
-    """The rules in rules/ must stay loadable — they are the worked examples."""
+    """The rules this repo ships must stay loadable — consumers copy them."""
 
     def test_every_shipped_rule_loads(self):
-        files = [p for p in RULES_DIR.glob("*.yaml") if not p.name.startswith("_")]
-        self.assertTrue(files, "no rule files found in rules/")
+        files = shipped_rule_files()
+        self.assertTrue(files, "no rule files found in examples/, drafts/ or rules/")
         for path in files:
             with self.subTest(rule=path.name):
                 load_rule(path)
 
     def test_shipped_rule_names_are_unique(self):
-        names = [
-            load_rule(p)["name"]
-            for p in RULES_DIR.glob("*.yaml")
-            if not p.name.startswith("_")
-        ]
-        self.assertEqual(len(names), len(set(names)))
+        names = [load_rule(p)["name"] for p in shipped_rule_files()]
+        self.assertEqual(
+            len(names), len(set(names)),
+            "two shipped rules share a name; the sync matches on exact name",
+        )
+
+    def test_promoted_examples_scope_to_a_placeholder(self):
+        """A promoted example must not carry the scope it was validated against."""
+        root = Path(__file__).resolve().parent.parent
+        for path in sorted((root / "examples").rglob("*.yaml")):
+            with self.subTest(rule=path.name):
+                for scope in load_rule(path)["scopes"]:
+                    self.assertNotIn(
+                        "standards-poc", scope,
+                        f"{path.name} still points at the validation repo",
+                    )
 
 
 if __name__ == "__main__":
