@@ -17,19 +17,13 @@
 #
 # Django/Python-flavoured, with the equivalent shapes in TypeScript, Java, Go
 # and SQL named alongside. Repoint the type names at your stack.
-name: "Money must use integer minor units or fixed-point decimals, never binary floats"
+name: "Represent monetary amounts as integer minor units or decimals"
 category: Correctness
 severity: error
 content: >-
-  A quantity of money must be stored, summed, and compared as integer minor
-  units (cents) or a fixed-point decimal type — never as a binary float or
-  double, which cannot represent most decimal fractions exactly, so totals and
-  equality drift. Whether a value *is* money is not decidable from the changed
-  line alone: a bare `float` says nothing. Trace the value to where its type is
-  declared — the model field, schema, or DTO, which is often in a different
-  module than the arithmetic — and read that declaration before reporting. Only
-  monetary quantities are in scope; rates, ratios, durations, and scores are
-  legitimately floating point.
+  Store, sum, and compare money as integer minor units or fixed-point decimals,
+  never binary floats or doubles. Trace the value to its model field, schema, or
+  DTO before reporting, and keep rates, ratios, durations, and scores out of scope.
 good_examples: |
   PASSES when the amount is an integer minor unit end to end, from the field
   declaration through the arithmetic:
@@ -67,7 +61,16 @@ bad_examples: |
     if abs(paid - owed) < 0.01:
         settle(invoice)
   VIOLATES when a monetary total is divided into a float and the remainder is
-  neither allocated nor documented — splitting a charge, prorating, applying a
+  not explicitly allocated so all integer minor units reconcile — splitting a charge, prorating, applying a
+  refund share:
+    per_party = invoice.total / 3                 # loses or invents a cent
+  VIOLATES in JavaScript or TypeScript when an amount is held as `number` and
+  rounded for storage with `toFixed`, or accumulated across many lines:
+    const total = lines.reduce((s, l) => s + l.amount, 0).toFixed(2);
+scopes:
+  - /your-org/your-service/
+ remainder is
+  not explicitly allocated so all integer minor units reconcile — splitting a charge, prorating, applying a
   refund share:
     per_party = invoice.total / 3                 # loses or invents a cent
   VIOLATES in JavaScript or TypeScript when an amount is held as `number` and

@@ -1,3 +1,4 @@
+# qodo-rules-as-code:example
 # Copy into `rules/` and adjust. Nothing under `examples/` is synced.
 #
 # MANDATE — the code must *carry* a required artifact, here a correlation id in
@@ -30,17 +31,10 @@ name: "Log errors as structured events carrying the request correlation id"
 category: Observability
 severity: warning
 content: >-
-  When changed code handles an error, that error must be recorded once as a
-  structured key/value event that includes the request or trace correlation id,
-  so the failure can be joined to the rest of that request's story. Context
-  belongs in fields, never interpolated into the message string. The
-  correlation id comes from the request context the service already carries —
-  find where that context is exposed before deciding an id is unavailable,
-  because it is usually a helper or middleware in a different module than the
-  error site. Required fields are identifiers and codes only: this rule never
-  asks for credentials, personal data, or payload bodies to be logged, and
-  omitting them is compliant. Report the error site that swallows or
-  interpolates, not every layer the exception passes through.
+  Record each handled error once as a structured event with the request or trace
+  correlation id, using fields rather than interpolating context into the message.
+  Find the existing request context before deciding the id is unavailable, require
+  only identifiers and codes (never sensitive data), and report the owning error site.
 good_examples: |
   PASSES when the error is one structured event whose fields carry the
   correlation id plus the identifiers and codes needed to act on it:
