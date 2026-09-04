@@ -10,6 +10,7 @@ covered — exercise those with `DRY_RUN=1 python3 scripts/sync_rules.py`.
 import sys
 import tempfile
 import unittest
+import re
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
@@ -254,10 +255,11 @@ class TestShippedRules(unittest.TestCase):
         for path in sorted((root / "examples").rglob("*.yaml")):
             with self.subTest(rule=path.name):
                 for scope in load_rule(path)["scopes"]:
-                    self.assertIn(
-                        "your-", scope,
+                    self.assertRegex(
+                        scope,
+                        r"^/your-[^/]+/your-[^/]+/$",
                         f"{path.name} is scoped to {scope!r}, which does not "
-                        "read as a placeholder — repoint it before promoting",
+                        "match the canonical placeholder pattern",
                     )
 
 
