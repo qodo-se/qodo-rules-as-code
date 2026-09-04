@@ -10,7 +10,7 @@ a reviewer has nothing to pass over and no stated test for the ambiguous case.
 ## Promoting one
 
 1. Decide its shape. Is it an absolute ban, a pattern allowed only with
-   evidence, or a violation not visible in the diff? See `examples/README.md`.
+   evidence, or a violation not visible in the diff, or a required artifact (mandate)? See `examples/README.md`.
 2. Rewrite `good_examples` to name every case that should **pass**, not just the
    ideal one, and `bad_examples` to state the test rather than show a snippet.
 3. Check what already governs the target repo — from **two** places, not one.
