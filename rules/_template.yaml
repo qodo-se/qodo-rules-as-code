@@ -12,7 +12,16 @@ category: Security
 # error = must comply | warning = comply by default | recommendation = when appropriate
 severity: warning
 
-# What to check or enforce, 1-3 sentences, imperative voice.
+# What to check or enforce, imperative voice. Three sentences is enough for a
+# rule decidable from the changed lines. Two shapes need more, and the extra
+# sentences are load-bearing rather than padding:
+#   - a rule whose violation is not visible in the diff needs the imperative
+#     instruction to go and read the declaration or origin it depends on;
+#   - a rule mandating that code carry something needs to say which layer owns
+#     the obligation, and what the rule does NOT ask for, or it fires at every
+#     layer and collides with its neighbours.
+# See examples/README.md. Cutting those sentences to hit a length target is how
+# a rule starts pattern-matching the diff and flagging correct code.
 content: >-
   Never hardcode credentials, API keys, tokens, or other secrets in source
   code or configuration committed to the repository. Load them from a secret

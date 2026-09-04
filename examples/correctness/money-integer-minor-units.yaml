@@ -48,6 +48,10 @@ good_examples: |
     tax_cents = round(subtotal_cents * tax_rate)
   PASSES when a float appears in a quantity that is not money at all —
   a timeout, a duration, a weight, a coordinate, a confidence score.
+  PASSES when a divided total is reconciled by allocating the remainder, so the
+  parts always sum back to the original amount exactly:
+    base, remainder = divmod(total_cents, parts)
+    return [base + (1 if i < remainder else 0) for i in range(parts)]
   PASSES when a float is produced only to render an amount at a boundary and is
   neither stored, summed, nor compared:
     return f"${amount_cents / 100:.2f}"
@@ -66,9 +70,10 @@ bad_examples: |
   drift being papered over rather than removed:
     if abs(paid - owed) < 0.01:
         settle(invoice)
-  VIOLATES when a monetary total is divided into a float and the remainder is
-  neither allocated nor documented — splitting a charge, prorating, applying a
-  refund share:
+  VIOLATES when a monetary total is divided and the parts are not reconciled
+  back to it. The remainder has to be *allocated* — noting it in a comment does
+  not preserve the invariant that the parts sum to the original amount.
+  Splitting a charge, prorating, applying a refund share:
     per_party = invoice.total / 3                 # loses or invents a cent
   VIOLATES in JavaScript or TypeScript when an amount is held as `number` and
   rounded for storage with `toFixed`, or accumulated across many lines:
