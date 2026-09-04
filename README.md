@@ -36,32 +36,19 @@ skills/qodo-rule-author/   authoring guidance, also read by Qodo at review time
 > **The sync workflow ships disabled.** Enable it once you have pointed the repo
 > at your own workspace — see *Setup* below.
 
-## Three worked examples
+## Examples
 
-`rules/` ships three examples chosen to show rule *types*, since the type tends
-to settle where a rule's substance goes.
+`examples/` is reference material, not rules — the sync only reads `rules/`.
+Copy one in, adjust it, open a PR.
 
-| File | Type | What it does |
-|---|---|---|
-| `noqa-prohibited-suppressions.yaml` | prohibition | bans a pattern outright; one condition |
-| `noqa-conditional-suppressions.yaml` | qualified permission | allows the pattern, but judges the reason attached to it |
-| `no-n-plus-one-queries.yaml` | contextual | the violation is not decidable from the changed lines alone |
+```
+examples/prohibition/           absolute ban on a pattern
+examples/qualified-permission/  pattern allowed, but only with evidence
+examples/contextual/            violation not visible in the diff
+examples/starters/              shorter, shape-only rules to build from
+```
 
-Two habits they demonstrate, both easy to miss:
-
-**Silence has to be authored.** Every case you want passed over must appear in
-`good_examples` as a passing condition. The N+1 rule stays quiet on a
-prefetching origin and on a bounded literal loop because both are listed. A rule
-that only ever fires is a rule nobody trusts.
-
-**An exemption belongs inside the rule it exempts.** A separate "these are
-acceptable" rule will not stop another rule from flagging. Name the permitted
-cases in the `good_examples` of the rule that would otherwise flag them — which
-is what the two NOQA files do.
-
-Each file carries a `# qodo-rules-as-code:example` first line, so a real sync
-refuses to run while they are present. Adopt one by deleting that line; drop the
-rest.
+See `examples/README.md` for what separates the types and which to reach for.
 
 ## Prerequisites
 

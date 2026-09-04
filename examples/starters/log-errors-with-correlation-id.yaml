@@ -1,0 +1,19 @@
+# Copy into `rules/` and adjust. Nothing under `examples/` is synced.
+#
+# SHAPE-ONLY starter — correct in form, but not yet classified by type and not
+# tightened. Before adopting one, decide whether it is a prohibition, a
+# qualified permission, or contextual (see ../README.md), then rewrite its
+# criteria to suit — in particular, name the cases that should PASS in
+# `good_examples`, which these do not yet do thoroughly.
+
+name: "Log errors as structured events carrying the request correlation id"
+category: Observability
+severity: warning
+content: >-
+  Emit logs as structured key/value events that include the request or trace
+  correlation id, and never interpolate context into a bare message string.
+  Logs without a correlation id cannot be joined into a single request's story.
+good_examples: |
+  logger.error("payment.capture_failed", extra={"request_id": ctx.request_id, "invoice_id": inv.id, "code": err.code})
+bad_examples: |
+  logger.error(f"capture failed for invoice {inv.id}: {err}")

@@ -1,0 +1,23 @@
+# Copy into `rules/` and adjust. Nothing under `examples/` is synced.
+#
+# SHAPE-ONLY starter — correct in form, but not yet classified by type and not
+# tightened. Before adopting one, decide whether it is a prohibition, a
+# qualified permission, or contextual (see ../README.md), then rewrite its
+# criteria to suit — in particular, name the cases that should PASS in
+# `good_examples`, which these do not yet do thoroughly.
+
+name: "Cover new conditional branches with tests"
+category: Testability
+severity: warning
+content: >-
+  A change that adds a conditional branch, an error path, or a new public
+  function must add tests that exercise it, including the failure case. Assert
+  on observable behaviour rather than on internal calls.
+good_examples: |
+  def test_refund_rejected_when_invoice_already_settled():
+      inv = make_invoice(state="settled")
+      with pytest.raises(InvoiceAlreadySettled):
+          refund(inv, amount_cents=500)
+bad_examples: |
+  # New `if invoice.state == "settled": raise ...` branch shipped with only
+  # the existing happy-path test for refund().

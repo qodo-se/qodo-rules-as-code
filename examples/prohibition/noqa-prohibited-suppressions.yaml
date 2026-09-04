@@ -1,19 +1,15 @@
-# qodo-rules-as-code:example — delete this file or remove this line before syncing.
+# Copy into `rules/` and adjust. Nothing under `examples/` is synced.
 #
-# TYPE: prohibition. An absolute ban on a pattern, decidable from the changed
-# lines alone. One condition, `error`.
+# PROHIBITION — an absolute ban on a pattern, decidable from the changed lines
+# alone. One condition, `error`.
 #
-# One of a pair with `noqa-conditional-suppressions.yaml`. Each is
-# self-contained: the codes that are always fine are named in this rule's own
-# `good_examples` as a carve-out. Keep exemptions inside the rule that would
-# otherwise flag them rather than in a separate "these are allowed" rule.
+# Note the carve-out at the end of `good_examples`: the codes that are always
+# fine are named in this rule rather than in a separate "these are allowed"
+# rule, because a separate rule will not stop this one from flagging.
 #
-# The prohibited list is illustrative. Put a code here only if suppressing it is
-# wrong in every context; a code whose correctness depends on where it appears
-# (source vs tests) belongs in a differently scoped rule.
-#
-# The path in `scopes` is a PLACEHOLDER. Scopes are not validated against real
-# repositories, so an invented path yields a rule that matches nothing.
+# Put a code in the banned list only if suppressing it is wrong in every
+# context. One whose correctness depends on where it appears — source versus
+# tests — wants a differently scoped rule instead.
 name: "NOQA: prohibited suppressions"
 category: Maintainability
 severity: error

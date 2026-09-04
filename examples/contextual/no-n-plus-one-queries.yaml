@@ -1,18 +1,16 @@
-# qodo-rules-as-code:example — delete this file or remove this line before syncing.
+# Copy into `rules/` and adjust. Nothing under `examples/` is synced.
 #
-# TYPE: contextual. The violation is not decidable from the changed lines. The
+# CONTEXTUAL — the violation is not decidable from the changed lines. The
 # compliant and violating diffs look the same; what separates them lives in a
-# file the diff never touches.
+# file the change never touches.
 #
-# Two things worth keeping:
-#  1. The instruction in `content` to trace the queryset's origin before
-#     reporting. Without it the rule matches on the loop and flags safe code.
-#  2. The carve-outs in `good_examples`. Every case that should pass has to be
-#     named there, or the rule fires on it.
+# Two details doing real work:
+#  - the instruction in `content` to trace the queryset's origin before
+#    reporting. Without it the rule matches on the loop and flags safe code.
+#  - the carve-outs in `good_examples`. Every case that should pass is named
+#    there, which is the only reason this rule stays quiet on them.
 #
 # Django/ORM-flavoured. Repoint the method names at your stack.
-#
-# The path in `scopes` is a PLACEHOLDER — see the note in the prohibited rule.
 name: "No N+1 queries: eager-load at the queryset origin"
 category: Performance
 severity: error

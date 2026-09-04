@@ -1,20 +1,17 @@
-# qodo-rules-as-code:example — delete this file or remove this line before syncing.
+# Copy into `rules/` and adjust. Nothing under `examples/` is synced.
 #
-# TYPE: qualified permission. The pattern is allowed, but only with evidence.
-# What is being checked is not the suppression itself — it is the quality of the
-# reason attached to it, which is why the criteria read as a judgement rather
-# than a pattern match.
+# QUALIFIED PERMISSION — the pattern is allowed, but only with evidence. What is
+# checked is not the suppression; it is the quality of the reason attached to it,
+# which is why the criteria read as a judgement rather than a pattern match.
 #
-# Two things worth keeping:
-#  1. The line telling the reviewer not to check whether the referenced ticket
-#     exists. Say what is out of scope, or it will be attempted.
-#  2. The condition count. Several failure conditions in one rule is fine.
+# Two details doing real work:
+#  - the line saying not to check whether the referenced ticket exists. Say what
+#    is out of scope, or it will be attempted.
+#  - several distinct failure conditions in one rule, which is fine.
 #
-# BEFORE ACTIVATING: this rule requires a ticket reference in a comment. If your
-# standards already include a rule prohibiting ticket identifiers in comments,
-# both will flag the same line. Search from both sides before activating.
-#
-# The path in `scopes` is a PLACEHOLDER — see the note in the prohibited rule.
+# Before activating: this rule requires a ticket reference in a comment. If your
+# standards also prohibit ticket identifiers in comments, both will flag the same
+# line. Search from both sides first.
 name: "NOQA: conditional suppressions require a justified, tracked exception"
 category: Maintainability
 severity: warning

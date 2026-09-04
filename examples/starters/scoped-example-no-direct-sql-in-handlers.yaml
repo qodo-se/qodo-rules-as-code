@@ -1,0 +1,25 @@
+# Copy into `rules/` and adjust. Nothing under `examples/` is synced.
+#
+# SHAPE-ONLY starter — correct in form, but not yet classified by type and not
+# tightened. Before adopting one, decide whether it is a prohibition, a
+# qualified permission, or contextual (see ../README.md), then rewrite its
+# criteria to suit — in particular, name the cases that should PASS in
+# `good_examples`, which these do not yet do thoroughly.
+
+name: "Keep SQL out of HTTP handlers — call the repository layer"
+category: Architecture
+severity: recommendation
+content: >-
+  HTTP handlers must not build or execute SQL directly; they call a function in
+  the repository layer, which owns every query. This keeps request handling
+  free of persistence detail and gives queries one place to be reviewed.
+good_examples: |
+  @router.get("/invoices/{invoice_id}")
+  async def get_invoice(invoice_id: str):
+      return await invoices.get_by_id(invoice_id)
+bad_examples: |
+  @router.get("/invoices/{invoice_id}")
+  async def get_invoice(invoice_id: str):
+      return await db.fetch_one("SELECT * FROM invoices WHERE id = $1", invoice_id)
+scopes:
+  - /your-org/your-service/

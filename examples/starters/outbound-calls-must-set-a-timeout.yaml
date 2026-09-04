@@ -1,0 +1,21 @@
+# Copy into `rules/` and adjust. Nothing under `examples/` is synced.
+#
+# SHAPE-ONLY starter — correct in form, but not yet classified by type and not
+# tightened. Before adopting one, decide whether it is a prohibition, a
+# qualified permission, or contextual (see ../README.md), then rewrite its
+# criteria to suit — in particular, name the cases that should PASS in
+# `good_examples`, which these do not yet do thoroughly.
+
+name: "Outbound network calls must set an explicit timeout"
+category: Reliability
+severity: error
+content: >-
+  Every HTTP request, RPC, and database call to another service must pass an
+  explicit timeout. Client library defaults are frequently unbounded, so one
+  slow dependency exhausts the caller's connection pool and spreads the outage.
+good_examples: |
+  resp = requests.get(url, timeout=(3.05, 10))
+  await fetch(url, { signal: AbortSignal.timeout(5000) });
+bad_examples: |
+  resp = requests.get(url)
+  await fetch(url);

@@ -1,0 +1,22 @@
+# Copy into `rules/` and adjust. Nothing under `examples/` is synced.
+#
+# SHAPE-ONLY starter — correct in form, but not yet classified by type and not
+# tightened. Before adopting one, decide whether it is a prohibition, a
+# qualified permission, or contextual (see ../README.md), then rewrite its
+# criteria to suit — in particular, name the cases that should PASS in
+# `good_examples`, which these do not yet do thoroughly.
+
+name: "Represent monetary amounts as integer minor units or decimals"
+category: Correctness
+severity: error
+content: >-
+  Store and compute money as integer minor units (cents) or a fixed-point
+  decimal type, never as float or double. Binary floating point cannot
+  represent most decimal fractions exactly, so sums and comparisons drift.
+good_examples: |
+  total_cents: int = sum(line.amount_cents for line in invoice.lines)
+  amount = Decimal("19.99") * Decimal(quantity)
+bad_examples: |
+  total = sum(float(line.amount) for line in invoice.lines)
+  if abs(paid - owed) < 0.01:  # papering over float drift
+      settle(invoice)
