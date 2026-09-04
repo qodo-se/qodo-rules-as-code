@@ -39,16 +39,21 @@ skills/qodo-rule-author/   authoring guidance, also read by Qodo at review time
 ## Examples
 
 `examples/` is reference material, not rules — the sync only reads `rules/`.
-Copy one in, adjust it, open a PR.
+Directories match the `category:` field, so browse by what you are writing for:
 
 ```
-examples/prohibition/           absolute ban on a pattern
-examples/qualified-permission/  pattern allowed, but only with evidence
-examples/contextual/            violation not visible in the diff
-examples/starters/              shorter, shape-only rules to build from
+examples/maintainability/   noqa suppression policy (two rules)
+examples/performance/       N+1 queries
+examples/security/          hardcoded secrets
+examples/correctness/       floating-point money
+examples/reliability/       missing timeouts
+examples/observability/     error logging
+examples/testability/       test coverage for new branches
+examples/architecture/      SQL out of handlers  (also demos `scopes:`)
 ```
 
-See `examples/README.md` for what separates the types and which to reach for.
+`examples/README.md` lists which are worked through versus shape-only, and the
+three rule shapes the first group illustrates.
 
 ## Prerequisites
 

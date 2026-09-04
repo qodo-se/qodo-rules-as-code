@@ -1,10 +1,8 @@
 # Copy into `rules/` and adjust. Nothing under `examples/` is synced.
 #
-# SHAPE-ONLY starter — correct in form, but not yet classified by type and not
-# tightened. Before adopting one, decide whether it is a prohibition, a
-# qualified permission, or contextual (see ../README.md), then rewrite its
-# criteria to suit — in particular, name the cases that should PASS in
-# `good_examples`, which these do not yet do thoroughly.
+# SHAPE-ONLY — correct in form, but not tightened. Before adopting it, name the
+# cases that should PASS in `good_examples`; this one only shows the ideal
+# case, so a reviewer has nothing to pass over. See ../README.md.
 
 name: "Cover new conditional branches with tests"
 category: Testability
