@@ -1,0 +1,92 @@
+# Copy into `rules/` and adjust. Nothing under `examples/` is synced.
+#
+# MANDATE — the code must *carry* a required artifact, here a correlation id in
+# a structured event. This type inverts where the risk sits: a prohibition
+# over-fires when its banned set is too broad, a mandate over-fires when the
+# ABSENCE of the artifact is read as the violation. Absence is almost always
+# legitimate somewhere.
+#
+# Three details doing real work:
+#  - the places the artifact is legitimately absent are enumerated in Success
+#    Criteria *before* anything about where it is required: a layer that
+#    re-raises, process startup with no request context, a non-error log, a
+#    field omitted on purpose. Without them the rule flags every intermediate
+#    `except` in the codebase.
+#  - `content` says which layer owns the obligation — logged once at the
+#    boundary that owns the request, not at every layer the error passes
+#    through. A mandate without an owner fires at each layer.
+#  - `content` states the negative too: the required fields are identifiers and
+#    codes, never credentials, personal data or payload bodies, and omitting
+#    them is compliant. A rule demanding log context is one careless sentence
+#    away from demanding that payloads be logged — check for a "keep sensitive
+#    data out of logs" rule on your repo before activating this one.
+#
+# One criterion here is deliberately weaker than the rest: a handler that
+# returns an error value rather than re-raising is not reliably read as
+# swallowing, because a function whose contract is to report failure in its
+# return value is doing the right thing. Sharpen it for your codebase or drop
+# it.
+name: "Log errors as structured events carrying the request correlation id"
+category: Observability
+severity: warning
+content: >-
+  When changed code handles an error, that error must be recorded once as a
+  structured key/value event that includes the request or trace correlation id,
+  so the failure can be joined to the rest of that request's story. Context
+  belongs in fields, never interpolated into the message string. The
+  correlation id comes from the request context the service already carries —
+  find where that context is exposed before deciding an id is unavailable,
+  because it is usually a helper or middleware in a different module than the
+  error site. Required fields are identifiers and codes only: this rule never
+  asks for credentials, personal data, or payload bodies to be logged, and
+  omitting them is compliant. Report the error site that swallows or
+  interpolates, not every layer the exception passes through.
+good_examples: |
+  PASSES when the error is one structured event whose fields carry the
+  correlation id plus the identifiers and codes needed to act on it:
+    logger.error("payment.capture_failed", extra={"request_id": ctx.request_id,
+                 "invoice_id": invoice.id, "code": err.code}, exc_info=True)
+    log.error().Str("request_id", id).Err(err).Msg("payment.capture_failed")
+  PASSES when a layer adds context and re-raises without logging, and the
+  boundary that owns the request logs it once. The rule requires the error
+  logged once with the id — not at every layer it travels through:
+    except ProviderError as err:
+        raise ChargeFailed(invoice.id) from err      # boundary logs it
+  PASSES when no correlation context exists at that point in the process —
+  module import, startup, a management command, a migration. A structured
+  event without the id is correct there; do not invent an id:
+    logger.error("migration.backfill_failed", extra={"batch": n}, exc_info=True)
+  PASSES when sensitive values are redacted or omitted. Identifiers and codes
+  are the required fields; a missing card number, token, or request body is
+  compliance, not an incomplete event.
+  PASSES for non-error logs. Debug and info statements are out of scope.
+  Judge only what the changed code does at the error site. Do not attempt to
+  verify that middleware populates the id, that the id is non-empty at runtime,
+  or that a downstream sink indexes the field.
+bad_examples: |
+  VIOLATES when context is interpolated into the message instead of carried in
+  fields — the id may be present and the event is still unqueryable:
+    logger.error(f"capture failed for invoice {inv.id}: {err}")
+    console.error(`capture failed ${invoice.id}`, err);
+    logger.error("capture failed for " + invoiceId, err);   // Java
+  VIOLATES when an error is logged without the correlation id at a site where
+  the request context is reachable:
+    except ProviderError as err:
+        logger.error("payment.capture_failed", extra={"invoice_id": invoice.id})
+  VIOLATES when the exception is swallowed — logged with neither the id, the
+  cause, nor a re-raise, so the request continues as though nothing failed:
+    except Exception:
+        logger.error("charge failed")
+  VIOLATES when the handler discards the error entirely, or demotes it to a
+  level that is not collected, which is swallowing with extra steps:
+    except Exception:
+        pass
+    except Exception as err:
+        logger.debug("charge failed", extra={"err": str(err)})
+  VIOLATES when the cause is lost: the message is recorded but the exception is
+  reduced to `str(err)` with no `exc_info`, stack, or error code, leaving
+  nothing to diagnose from:
+    logger.error("payment.capture_failed", extra={"request_id": ctx.request_id,
+                 "detail": str(err)})
+scopes:
+  - /your-org/your-service/

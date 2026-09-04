@@ -12,7 +12,24 @@ category: Security
 # error = must comply | warning = comply by default | recommendation = when appropriate
 severity: warning
 
-# What to check or enforce, 1-3 sentences, imperative voice.
+# What to check or enforce, imperative voice. Three sentences for a rule
+# decidable from the changed lines; up to about six where the shape needs it,
+# and no more — past that the criteria are carrying it, not `content`.
+#
+# Two shapes need the extra sentences, and they are load-bearing:
+#   - a rule whose violation is not visible in the diff has to warn that what
+#     decides it lives elsewhere. The imperative instruction to go and read it
+#     belongs WITH THE CONDITIONS in good_examples/bad_examples, where the
+#     decision is made — see examples/performance, whose `content` only warns
+#     and whose example fields carry the instruction. Repeating it in `content`
+#     is fine (examples/correctness does), but the example fields are the half
+#     that cannot be dropped.
+#   - a rule mandating that code carry something needs to say which layer owns
+#     the obligation, and what the rule does NOT ask for, or it fires at every
+#     layer and collides with its neighbours.
+#
+# See examples/README.md. Cutting these to hit a length target is how a rule
+# starts pattern-matching the diff and flagging correct code.
 content: >-
   Never hardcode credentials, API keys, tokens, or other secrets in source
   code or configuration committed to the repository. Load them from a secret

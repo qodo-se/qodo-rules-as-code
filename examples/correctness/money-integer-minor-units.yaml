@@ -1,0 +1,82 @@
+# Copy into `rules/` and adjust. Nothing under `examples/` is synced.
+#
+# CONTEXTUAL — whether a value is money is not decidable from the changed line.
+# A bare `float` says nothing; what settles it is the field, schema, or DTO
+# declaration the value came from, often in a module the change never touches.
+#
+# Three details doing real work:
+#  - `content` carries the investigative instruction imperatively: trace the
+#    value to where its type is declared and read that declaration before
+#    reporting. Without it the rule matches `float` on sight and flags ratios,
+#    timeouts, and coordinates.
+#  - `content` also states the negative scope — only monetary quantities are in
+#    scope. That sentence is what keeps the rule quiet on rates and durations.
+#  - every passing case is named in Success Criteria, including the awkward
+#    ones: a float *rate* that produces an integer amount, and a float produced
+#    only to render a value at a boundary. Unnamed, both get flagged.
+#
+# Django/Python-flavoured, with the equivalent shapes in TypeScript, Java, Go
+# and SQL named alongside. Repoint the type names at your stack.
+name: "Money must use integer minor units or fixed-point decimals, never binary floats"
+category: Correctness
+severity: error
+content: >-
+  A quantity of money must be stored, summed, and compared as integer minor
+  units (cents) or a fixed-point decimal type — never as a binary float or
+  double, which cannot represent most decimal fractions exactly, so totals and
+  equality drift. Whether a value *is* money is not decidable from the changed
+  line alone: a bare `float` says nothing. Trace the value to where its type is
+  declared — the model field, schema, or DTO, which is often in a different
+  module than the arithmetic — and read that declaration before reporting. Only
+  monetary quantities are in scope; rates, ratios, durations, and scores are
+  legitimately floating point.
+good_examples: |
+  PASSES when the amount is an integer minor unit end to end, from the field
+  declaration through the arithmetic:
+    # models.py
+    amount_cents = models.BigIntegerField()
+    # services/billing.py
+    total_cents = sum(item.amount_cents for item in invoice.line_items.all())
+  PASSES when a fixed-point decimal is used and constructed from a string or an
+  integer — never from a float literal:
+    amount = Decimal("19.99") * quantity          # DecimalField(max_digits=12, decimal_places=2)
+    -- SQL: amount NUMERIC(12,2)  /  Java: BigDecimal  /  Go: int64 cents
+  PASSES when a float carries a rate, ratio, or percentage rather than an
+  amount — the multiplier may be float as long as the amount it produces is
+  reduced back to integer minor units:
+    tax_rate = 0.0875                             # also fx_rate, discount_pct
+    tax_cents = round(subtotal_cents * tax_rate)
+  PASSES when a float appears in a quantity that is not money at all —
+  a timeout, a duration, a weight, a coordinate, a confidence score.
+  PASSES when a divided total is reconciled by allocating the remainder, so the
+  parts always sum back to the original amount exactly:
+    base, remainder = divmod(total_cents, parts)
+    return [base + (1 if i < remainder else 0) for i in range(parts)]
+  PASSES when a float is produced only to render an amount at a boundary and is
+  neither stored, summed, nor compared:
+    return f"${amount_cents / 100:.2f}"
+bad_examples: |
+  VIOLATES when a monetary field is declared as a float, or an amount is cast
+  to one. Report the declaration, even when the diff only touches the
+  arithmetic that reads it:
+    amount = models.FloatField()                  # Django; also `float` / `double`
+    total = sum(float(line.amount) for line in invoice.lines)
+    private double balance;                       // Java  /  Go: var total float64
+    -- SQL: amount FLOAT / REAL / DOUBLE PRECISION
+  VIOLATES when a decimal is constructed from a float literal, which inherits
+  the drift it was meant to prevent:
+    Decimal(19.99)                                # already 19.9899999999999984...
+  VIOLATES when money is compared with a tolerance, which is the signature of
+  drift being papered over rather than removed:
+    if abs(paid - owed) < 0.01:
+        settle(invoice)
+  VIOLATES when a monetary total is divided and the parts are not reconciled
+  back to it. The remainder has to be *allocated* — noting it in a comment does
+  not preserve the invariant that the parts sum to the original amount.
+  Splitting a charge, prorating, applying a refund share:
+    per_party = invoice.total / 3                 # loses or invents a cent
+  VIOLATES in JavaScript or TypeScript when an amount is held as `number` and
+  rounded for storage with `toFixed`, or accumulated across many lines:
+    const total = lines.reduce((s, l) => s + l.amount, 0).toFixed(2);
+scopes:
+  - /your-org/your-service/

@@ -1,4 +1,4 @@
-# qodo-rules-starter
+# qodo-rules-as-code
 
 Manage your Qodo **Review Standards** as code.
 
@@ -44,11 +44,14 @@ Directories match the `category:` field, so browse by what you are writing for:
 ```
 examples/maintainability/   noqa suppression policy (two rules)
 examples/performance/       N+1 queries
+examples/security/          hardcoded secrets
+examples/correctness/       money as integer minor units
+examples/observability/     structured error logs with a correlation id
 ```
 
 Every rule in `examples/` has been exercised against real diffs, including
-cases that must produce silence. `examples/README.md` explains the three rule
-shapes they illustrate.
+cases that must produce silence. `examples/README.md` explains the rule shapes
+they illustrate, and how to validate one before adopting it.
 
 `drafts/` holds shape-only rules awaiting that validation. Correct in form, not
 yet trustworthy — see `drafts/README.md` for how to promote one.
