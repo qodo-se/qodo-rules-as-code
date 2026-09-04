@@ -1,4 +1,4 @@
-# qodo-rules-starter
+# qodo-rules-as-code
 
 Manage your Qodo **Review Standards** as code.
 
@@ -46,6 +46,7 @@ examples/maintainability/   noqa suppression policy (two rules)
 examples/performance/       N+1 queries
 examples/security/          hardcoded secrets
 examples/correctness/       money as integer minor units
+examples/observability/     structured error logs with a correlation id
 ```
 
 Every rule in `examples/` has been exercised against real diffs, including

@@ -13,12 +13,13 @@ writing for.
 | `no-n-plus-one-queries` | Performance | error |
 | `no-hardcoded-secrets` | Security | error |
 | `money-integer-minor-units` | Correctness | error |
+| `log-errors-with-correlation-id` | Observability | warning |
 
 Each has been exercised against real diffs — including cases that must produce
 **silence** — and its header notes which details are doing the work. Rules that
 have not been through that are in `drafts/`, not here.
 
-## Three shapes worth knowing
+## Four shapes worth knowing
 
 Each is a different shape, and the shape decides where the rule's substance
 goes:
@@ -33,6 +34,13 @@ goes:
   so the rule has to say to go and read it. `no-n-plus-one-queries`, and
   `money-integer-minor-units`, where a bare `float` means nothing until you
   read the declaration it came from.
+- **A required artifact the code must carry** — the mandate.
+  `log-errors-with-correlation-id`. This one inverts the risk: a ban over-fires
+  when its banned set is too broad, a mandate over-fires when the *absence* of
+  the artifact is read as the violation, and absence is almost always
+  legitimate somewhere. Enumerate where it is legitimately missing before
+  saying where it is required, and name which layer owns the obligation or the
+  rule fires at every layer the error passes through.
 
 Three habits they share:
 
@@ -45,7 +53,14 @@ acceptable" rule will not stop another rule from flagging.
 **Bound the reviewer against work it cannot do.** Left unbounded it attempts
 the verification anyway and reports on the result — so
 `no-hardcoded-secrets` says outright not to judge whether a credential is still
-valid, and `no-n-plus-one-queries` says how far to trace before reporting.
+valid, `no-n-plus-one-queries` says how far to trace before reporting, and
+`log-errors-with-correlation-id` says not to check whether middleware actually
+populates the id.
+
+**Say what the rule does *not* ask for**, wherever a neighbouring rule could
+contradict it. A rule mandating log context sits one careless sentence away from
+demanding that payloads be logged, against a "keep sensitive data out of logs"
+rule that almost every organisation has.
 
 ## Validating one before you adopt it
 
@@ -58,11 +73,17 @@ has not been tested.
 
 Two things to know before you start:
 
-- **Check scope at every tier.** A rule's `scopeElements` carry a `kind` of
-  `repo`, `org`, or `global`. A rule list filtered on repository paths passes
-  straight over the org tier, so an org-wide rule on the same subject as the one
-  you are writing is easy to miss until it shows up in a review.
+- **Look for overlaps in two places.** `qodo rules list` shows user-authored
+  rules; rules auto-derived from a skill never appear in it. Enumerate skills
+  too (`qodo review-skills list`) and filter on each skill's own `scopes` — a
+  skill scoped to a whole org governs every repo in it, and its name rarely
+  contains the subject word you would search for.
 - **Score conditions covered, not findings counted.** A rule with several
   failure conditions reports one consolidated finding that names them all, so an
   expectation written as "2 findings" reads as a half-miss against correct
   behaviour.
+- **Read your seeded cases against every other rule on the repo.** A control
+  written to exercise one rule can contain a real violation of another, and it
+  reads as your rule failing until you look. Expect this with rules extracted
+  from a skill in the repo itself, which tend to govern test code — exactly what
+  a seeded case has to write.

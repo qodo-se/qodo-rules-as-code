@@ -243,14 +243,21 @@ class TestShippedRules(unittest.TestCase):
         )
 
     def test_promoted_examples_scope_to_a_placeholder(self):
-        """A promoted example must not carry the scope it was validated against."""
+        """A promoted example must not carry the scope it was validated against.
+
+        An example is validated against a real repository before it lands here,
+        and that repository's path must not travel with it — a consumer copying
+        the file would sync a rule scoped to someone else's repo. Every scope
+        here has to read as a placeholder.
+        """
         root = Path(__file__).resolve().parent.parent
         for path in sorted((root / "examples").rglob("*.yaml")):
             with self.subTest(rule=path.name):
                 for scope in load_rule(path)["scopes"]:
-                    self.assertNotIn(
-                        "standards-poc", scope,
-                        f"{path.name} still points at the validation repo",
+                    self.assertIn(
+                        "your-", scope,
+                        f"{path.name} is scoped to {scope!r}, which does not "
+                        "read as a placeholder — repoint it before promoting",
                     )
 
 
