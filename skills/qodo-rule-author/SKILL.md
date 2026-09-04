@@ -89,16 +89,22 @@ applied to this repo's YAML.
 That is enough for a rule decidable from the changed lines. Two other shapes
 need more from this field.
 
-**Does it say how to investigate, when the diff is not enough?** If deciding the
-rule means reading something the change does not touch, `content` has to say so
-in the imperative, and say what is not sufficient evidence. Leave it out and the
+**Does it warn that the diff may not be enough?** If deciding the rule means
+reading something the change does not touch, `content` has to say so, or the
 rule matches on the visible pattern and flags correct code.
 
 - Thin: "Queries must not run once per row."
 - Strong: "…the queryset that feeds the loop must eager-load that relation at
-  its origin. The origin is frequently in a different function or module than
-  the loop — trace it and read it before reporting, and do not treat the loop
-  alone as sufficient evidence."
+  its origin — which is often in a different function or module than the loop
+  itself."
+
+Note where the actual instruction goes. `content` raises the flag; the
+imperative belongs with the conditions, in both example fields, because that is
+where the reviewer is deciding. `no-n-plus-one-queries` puts "trace the origin
+before reporting, following it across functions and modules" alongside its
+passing cases, and "the loop and the queryset origin being in different modules
+does not excuse the violation — read the origin and report it" alongside its
+failing ones.
 
 **Does it name the evidence required, when the pattern is allowed with a
 caveat?** For a rule that permits something conditionally, the condition is the
