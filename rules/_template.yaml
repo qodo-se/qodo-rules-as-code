@@ -1,0 +1,32 @@
+# Copy to rules/<kebab-case-name>.yaml — files starting with "_" are ignored.
+#
+# `name` is the rule's identity in Qodo (unique in the workspace, max 128
+# chars): renaming it creates a NEW rule and leaves the old one live.
+
+name: "Example: never hardcode secrets in source"
+
+# Must be a category your workspace supports — run `qodo rules metadata` to
+# list them. Keep scripts/sync_rules.py:CATEGORIES in step with that output.
+category: Security
+
+# error = must comply | warning = comply by default | recommendation = when appropriate
+severity: warning
+
+# What to check or enforce, 1-3 sentences, imperative voice.
+content: >-
+  Never hardcode credentials, API keys, tokens, or other secrets in source
+  code or configuration committed to the repository. Load them from a secret
+  manager or from the environment at runtime.
+
+# Short snippets. Examples are what make a rule reviewable — the PR check
+# requires both (see REQUIRE_EXAMPLES in scripts/validate_rules.py).
+good_examples: |
+  api_key = os.environ["SERVICE_API_KEY"]
+bad_examples: |
+  api_key = "sk-live-4f8a2b..."
+
+# Optional. Repository paths this rule applies to, each starting and ending
+# with "/". Omit (or leave empty) for the universal scope "/" — the whole org.
+# scopes:
+#   - /your-org/your-service/
+#   - /your-org/your-frontend/src/

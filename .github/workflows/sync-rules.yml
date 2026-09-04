@@ -1,0 +1,72 @@
+name: Sync rules to Qodo
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "rules/**"
+      - "scripts/sync_rules.py"
+      - ".github/workflows/sync-rules.yml"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Report what would change without writing to Qodo"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sync-rules
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    # QODO_API_KEY lives in this environment, whose branch policy allows only
+    # main — so branch and PR builds can never read it.
+    environment: qodo-sync
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      # Installer self-verifies the CLI's sha256 against its release manifest.
+      - name: Install qodo CLI
+        run: curl -fsSL https://get.qodo.ai/install.sh | sh
+
+      - name: Log in to Qodo
+        env:
+          QODO_API_KEY: ${{ secrets.QODO_API_KEY }}
+          QODO_SDK_BASE_URL: ${{ vars.QODO_SDK_BASE_URL }}
+        run: |
+          if [ -z "$QODO_API_KEY" ]; then
+            echo "::error::QODO_API_KEY is not set in the qodo-sync environment"
+            exit 1
+          fi
+          if [ -z "$QODO_SDK_BASE_URL" ]; then
+            echo "::error::QODO_SDK_BASE_URL repo variable is not set. Every"
+            echo "::error::workspace has its own SDK URL — read yours from"
+            echo "::error::'qodo whoami --json' (field sdkBaseUrl) and set it under"
+            echo "::error::Settings → Secrets and variables → Actions → Variables."
+            exit 1
+          fi
+          "$HOME/.qodo/bin/qodo" login \
+            --api-key "$QODO_API_KEY" \
+            --base-url "$QODO_SDK_BASE_URL" \
+            --insecure-storage
+          "$HOME/.qodo/bin/qodo" whoami --json
+
+      - name: Sync rules
+        env:
+          QODO_BIN: /home/runner/.qodo/bin/qodo
+          DRY_RUN: ${{ inputs.dry_run && '1' || '0' }}
+        run: |
+          pip install --quiet 'pyyaml==6.0.2'
+          python3 scripts/sync_rules.py

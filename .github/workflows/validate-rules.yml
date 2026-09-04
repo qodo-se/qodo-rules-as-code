@@ -1,0 +1,37 @@
+name: Validate rules
+
+on:
+  pull_request:
+    paths:
+      - "rules/**"
+      - "scripts/**"
+      - "tests/**"
+      - ".github/workflows/validate-rules.yml"
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      # No Qodo credentials here on purpose: PR code is untrusted, so this job
+      # runs offline checks only.
+      - name: Install PyYAML
+        run: pip install --quiet 'pyyaml==6.0.2'
+
+      - name: Unit tests
+        run: python3 -m unittest discover -s tests -v
+
+      - name: Validate rule files
+        run: python3 scripts/validate_rules.py

@@ -1,0 +1,48 @@
+# qodo-rules-as-code:example — delete this file or remove this line before syncing.
+#
+# TYPE: prohibition. An absolute ban on a pattern, decidable from the changed
+# lines alone. One condition, `error`.
+#
+# One of a pair with `noqa-conditional-suppressions.yaml`. Each is
+# self-contained: the codes that are always fine are named in this rule's own
+# `good_examples` as a carve-out. Keep exemptions inside the rule that would
+# otherwise flag them rather than in a separate "these are allowed" rule.
+#
+# The prohibited list is illustrative. Put a code here only if suppressing it is
+# wrong in every context; a code whose correctness depends on where it appears
+# (source vs tests) belongs in a differently scoped rule.
+#
+# The path in `scopes` is a PLACEHOLDER. Scopes are not validated against real
+# repositories, so an invented path yields a rule that matches nothing.
+name: "NOQA: prohibited suppressions"
+category: Maintainability
+severity: error
+content: >-
+  This rule governs inline lint suppression comments — `# noqa`, `# type:
+  ignore`, and equivalents. Never suppress a check whose code is in the
+  prohibited set, and never write a suppression without an explicit code. These
+  checks guard correctness and security properties that no local context makes
+  safe to ignore, so the finding they raise must be fixed rather than silenced.
+good_examples: |
+  A changed line adds no suppression at all, or adds one whose code is outside
+  the prohibited set. PASSES:
+    from .models import Invoice          # import is actually used
+    try: charge() except StripeError:    # specific exception, no E722 to suppress
+    resp = client.post(url, timeout=5)   # nothing to suppress
+  Passes — with no finding and no justification required — when the suppression's
+  code is in the permanently-acceptable set: E402, F403, F405, PLC0415, TID252.
+  These are correct today and will still be correct in a year, so do not ask the
+  author to explain, ticket, or remove them:
+    from .settings import *                  # noqa: F403
+    from .legacy import helper               # noqa: PLC0415  (breaks import cycle)
+bad_examples: |
+  A changed line adds a suppression whose code is one of F401, F841, E722, S608,
+  or adds a bare suppression with no code at all. VIOLATES:
+    from .models import Invoice  # noqa: F401
+    result = compute()  # noqa: F841
+    except Exception:  # noqa: E722
+    total = raw_sql(query)  # noqa
+  A bare "# noqa" or "# type: ignore" with no code is always a violation of this
+  rule, regardless of what it would have suppressed.
+scopes:
+  - /your-org/your-service/

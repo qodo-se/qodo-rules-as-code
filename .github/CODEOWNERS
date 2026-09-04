@@ -1,0 +1,4 @@
+# Every rule change is an org-wide policy change — require a review from the
+# team that owns your engineering standards.
+# Replace with your own team or users before using this repo.
+* @your-org/your-standards-team

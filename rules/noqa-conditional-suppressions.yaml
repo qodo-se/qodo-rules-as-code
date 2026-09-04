@@ -1,0 +1,61 @@
+# qodo-rules-as-code:example — delete this file or remove this line before syncing.
+#
+# TYPE: qualified permission. The pattern is allowed, but only with evidence.
+# What is being checked is not the suppression itself — it is the quality of the
+# reason attached to it, which is why the criteria read as a judgement rather
+# than a pattern match.
+#
+# Two things worth keeping:
+#  1. The line telling the reviewer not to check whether the referenced ticket
+#     exists. Say what is out of scope, or it will be attempted.
+#  2. The condition count. Several failure conditions in one rule is fine.
+#
+# BEFORE ACTIVATING: this rule requires a ticket reference in a comment. If your
+# standards already include a rule prohibiting ticket identifiers in comments,
+# both will flag the same line. Search from both sides before activating.
+#
+# The path in `scopes` is a PLACEHOLDER — see the note in the prohibited rule.
+name: "NOQA: conditional suppressions require a justified, tracked exception"
+category: Maintainability
+severity: warning
+content: >-
+  Suppressions in the conditional set are permitted only as tracked,
+  time-bounded exceptions. Each must state why the check is wrong or unfixable
+  at this specific site, and its `# noqa` comment must carry a ticket or issue
+  identifier (for example PROJ-4471) so the suppression can be found and
+  removed later. A suppression nobody can trace is permanent by default.
+good_examples: |
+  The suppression is attached to the single line it excuses, names its code
+  explicitly, and its trailing comment gives a cause a reader could act on — an
+  external constraint, a framework-imposed signature, a production data shape, a
+  planned migration — followed by a tracking reference matching [A-Z]+-[0-9]+.
+  PASSES:
+    def process(self, request, *, legacy_mode):  # noqa: ARG002 - DRF requires this signature; drop when the legacy serializer goes (PROJ-4471)
+    name = models.CharField(max_length=200, null=True)  # noqa: DJ001 - column is nullable in prod, migration tracked in PROJ-3902
+  Do NOT attempt to verify that the referenced ticket exists, is open, or is
+  accurate. A well-formed reference satisfies this rule.
+  Passes — with no finding and no justification required — when the suppression's
+  code is in the permanently-acceptable set: E402, F403, F405, PLC0415, TID252.
+  These are correct today and will still be correct in a year, so do not ask the
+  author to explain, ticket, or remove them:
+    from .settings import *                  # noqa: F403
+    from .legacy import helper               # noqa: PLC0415  (breaks import cycle)
+bad_examples: |
+  A changed line adds a suppression whose code is one of E501, C901, PLR0913,
+  ARG002, DJ001 and ANY of the following holds. VIOLATES:
+    no trailing justification at all -
+      url = f"{base}/very/long/path"  # noqa: E501
+    a justification that only restates what the code means, rather than why it
+    is wrong here -
+      def build_report(a, b, c, d, e, f, g):  # noqa: PLR0913 - too many arguments
+    a bare TODO or FIXME in place of a reason -
+      def handle(payload):  # noqa: C901 - TODO
+    no tracking reference matching [A-Z]+-[0-9]+ -
+      def handle(payload):  # noqa: C901 - the state machine is inherently branchy
+    the suppression is module-scoped rather than attached to a specific line -
+      # ruff: noqa: C901        (at the top of a file)
+      # flake8: noqa           (at the top of a file)
+  A module-scoped blanket suppression is never conditionally acceptable, even
+  when its code is in the conditional set.
+scopes:
+  - /your-org/your-service/

@@ -1,0 +1,50 @@
+# qodo-rules-as-code:example — delete this file or remove this line before syncing.
+#
+# TYPE: contextual. The violation is not decidable from the changed lines. The
+# compliant and violating diffs look the same; what separates them lives in a
+# file the diff never touches.
+#
+# Two things worth keeping:
+#  1. The instruction in `content` to trace the queryset's origin before
+#     reporting. Without it the rule matches on the loop and flags safe code.
+#  2. The carve-outs in `good_examples`. Every case that should pass has to be
+#     named there, or the rule fires on it.
+#
+# Django/ORM-flavoured. Repoint the method names at your stack.
+#
+# The path in `scopes` is a PLACEHOLDER — see the note in the prohibited rule.
+name: "No N+1 queries: eager-load at the queryset origin"
+category: Performance
+severity: error
+content: >-
+  Database work must not scale with the size of a collection being iterated.
+  When changed code traverses a related model inside a loop, the queryset that
+  feeds the loop must eager-load that relation at its origin — which is often
+  in a different function or module than the loop itself.
+good_examples: |
+  PASSES when related access inside the loop is covered by an eager-load at the
+  queryset's origin. Trace the origin before reporting, following it across
+  functions and modules:
+    # repositories.py
+    def recent_invoices(): return Invoice.objects.select_related("customer").all()
+    # serializers.py
+    for inv in recent_invoices(): rows.append(inv.customer.email)   # prefetched, OK
+  PASSES when the iterable is provably bounded and not database-derived — a
+  literal, a fixed-length tuple, or a single-row .get():
+    for status in ("open", "paid", "void"): counts[status] = tally(status)
+  PASSES when the loop performs no database work at all.
+bad_examples: |
+  VIOLATES when a traversal to a related model, or a .get()/.filter()/.count()/
+  .exists() call, is evaluated inside a for loop or comprehension whose iterable
+  originates from a queryset, and no select_related/prefetch_related covers it at
+  that origin:
+    # repositories.py
+    def recent_invoices(): return Invoice.objects.all()          # no eager-load
+    # serializers.py
+    for inv in recent_invoices(): rows.append(inv.customer.email) # 1 query per row
+  Also VIOLATES when the query is explicit rather than a traversal:
+    for inv in Invoice.objects.all(): total += LineItem.objects.filter(invoice=inv).count()
+  The loop and the queryset origin being in different modules does not excuse
+  the violation — read the origin and report it.
+scopes:
+  - /your-org/your-service/
