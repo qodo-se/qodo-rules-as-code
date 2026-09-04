@@ -71,9 +71,6 @@ another rule from flagging. An exemption is part of a rule, not a neighbour to
 it: name the permitted cases in the `good_examples` of the rule that would
 otherwise flag them.
 
-Whichever the type, `content` is what the duplicate check searches, so the
-rule's distinguishing claim belongs there rather than only in the examples.
-
 ## Criteria: is the rule clear and specific?
 
 A rule is only effective if it is understandable and unambiguous. These are
@@ -88,6 +85,37 @@ applied to this repo's YAML.
 - Strong: "Every outbound HTTP request must pass an explicit timeout. Client
   defaults are frequently unbounded, so one slow dependency exhausts the
   caller's connection pool and spreads the outage."
+
+That is enough for a rule decidable from the changed lines. Two other shapes
+need more from this field.
+
+**Does it say how to investigate, when the diff is not enough?** If deciding the
+rule means reading something the change does not touch, `content` has to say so
+in the imperative, and say what is not sufficient evidence. Leave it out and the
+rule matches on the visible pattern and flags correct code.
+
+- Thin: "Queries must not run once per row."
+- Strong: "…the queryset that feeds the loop must eager-load that relation at
+  its origin. The origin is frequently in a different function or module than
+  the loop — trace it and read it before reporting, and do not treat the loop
+  alone as sufficient evidence."
+
+**Does it name the evidence required, when the pattern is allowed with a
+caveat?** For a rule that permits something conditionally, the condition is the
+rule. State it here, not only in the examples.
+
+- Thin: "Suppressions need a good reason."
+- Strong: "…each must state why the check is wrong at this specific site, and
+  its comment must carry a ticket or issue identifier so the suppression can be
+  found and removed later."
+
+**Would someone searching for this rule find it?** `content` is what the
+duplicate check searches — the example fields are not searched — so the phrase
+that distinguishes this rule from its neighbours has to appear here. If the
+rule requires or forbids a specific artifact, name the artifact in the words
+someone would use looking for it. A rule whose distinguishing requirement lives
+only in its examples is findable by name and nothing else, which is how
+near-duplicates and rules that contradict each other get written.
 
 **Does it have a single, measurable goal?** A developer must be able to tell
 whether a given diff passes or fails. If describing the purpose needs an "and",
