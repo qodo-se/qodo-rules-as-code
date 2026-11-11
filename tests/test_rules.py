@@ -96,6 +96,13 @@ class TestLoadRule(unittest.TestCase):
             load_rule(write("- just\n- a list\n"))
         self.assertIn("not a YAML mapping", str(cm.exception))
 
+    def test_non_string_content_is_rejected(self):
+        # A YAML list passes a presence check, then breaks the sync after merge.
+        text = VALID.replace('content: "Do the thing."', "content:\n  - Do the thing.")
+        with self.assertRaises(ValueError) as cm:
+            load_rule(write(text))
+        self.assertIn("content must be a string", str(cm.exception))
+
 
 class TestParseScopes(unittest.TestCase):
     def test_absent_means_universal(self):

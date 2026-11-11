@@ -6,6 +6,7 @@ filenames, duplicate rule names, and — when REQUIRE_EXAMPLES is on — missing
 examples. Warns via GitHub annotations on renames and deletions, both of which
 leave the previously synced rule live in Qodo (the sync never deletes).
 """
+import os
 import re
 import subprocess
 import sys
@@ -14,7 +15,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from sync_rules import EXAMPLE_MARKER, RULES_DIR, is_example, load_rule
 
-BASE_REF = "origin/main"
+# Compare against the PR's actual target branch (GITHUB_BASE_REF on pull_request
+# events); fall back to main for local runs.
+BASE_REF = f"origin/{os.environ.get('GITHUB_BASE_REF') or 'main'}"
 KEBAB = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*\.yaml$")
 
 # --- Repo policy: tighten these for your org ---------------------------------
@@ -84,9 +87,24 @@ def main():
                   "stays live in Qodo as an orphan; retire it in the portal after merge")
 
     for line in git("diff", "--name-status", f"{BASE_REF}...HEAD", "--", "rules/").splitlines():
-        status, _, fname = line.partition("\t")
-        if status == "D" and not Path(fname).name.startswith("_"):
-            print(f"::warning file={fname}::deleted — the synced rule stays live in "
+        parts = line.split("\t")
+        status = parts[0]
+        # A rename (R<score>\told\tnew) also orphans the old file's rule when its
+        # `name:` changed with it; the per-file check above can't see the old path.
+        if status.startswith("R") and len(parts) == 3:
+            old_path, new_path = parts[1], parts[2]
+            old_shown = git("show", f"{BASE_REF}:{old_path}")
+            m = re.search(r'^name:\s*"?(.+?)"?\s*$', old_shown, re.M)
+            try:
+                new_name = load_rule(Path(new_path)).get("name")
+            except Exception:
+                new_name = None
+            if m and m.group(1) != new_name:
+                print(f"::warning file={new_path}::renamed from {old_path} and its name "
+                      f"changed from '{m.group(1)}' — the old rule stays live in Qodo; "
+                      "retire it after merge")
+        elif status == "D" and not Path(parts[-1]).name.startswith("_"):
+            print(f"::warning file={parts[-1]}::deleted — the synced rule stays live in "
                   "Qodo; retire it in the portal or with qodo rules set-state")
 
     for e in errors:

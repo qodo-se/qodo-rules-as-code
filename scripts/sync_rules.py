@@ -91,6 +91,11 @@ def load_rule(path):
     missing = [f for f in REQUIRED if not doc.get(f)]
     if missing:
         raise ValueError(f"missing fields: {missing}")
+    # Presence isn't enough: a YAML list or number here passes the PR check and
+    # then breaks the sync after merge (.rstrip() / subprocess argv).
+    for field in ("name", "category", "severity", "content", "good_examples", "bad_examples"):
+        if field in doc and doc[field] is not None and not isinstance(doc[field], str):
+            raise ValueError(f"{field} must be a string, got {type(doc[field]).__name__}")
     if doc["severity"] not in SEVERITIES:
         raise ValueError(f"severity must be one of {sorted(SEVERITIES)}")
     if doc["category"] not in CATEGORIES:
@@ -107,8 +112,20 @@ def load_rule(path):
 
 
 def find_existing(name):
-    page = qodo("rules", "list", "--name-contains", name, "--page-size", "100")
-    return next((r for r in page.get("rules", []) if r["name"] == name), None)
+    # --name-contains is a substring match, so a common name can match more than
+    # one page; read every page before concluding the rule doesn't exist.
+    page_no = 1
+    while True:
+        page = qodo("rules", "list", "--name-contains", name,
+                    "--page-size", "100", "--page", str(page_no))
+        rules = page.get("rules", [])
+        match = next((r for r in rules if r["name"] == name), None)
+        if match is not None:
+            return match
+        total = page.get("totalCount")
+        if not rules or (isinstance(total, int) and page_no * 100 >= total):
+            return None
+        page_no += 1
 
 
 def in_sync(rule, existing):
@@ -219,13 +236,22 @@ def main():
                 )
             if in_sync(rule, existing):
                 unchanged.append(rule["name"])
-                if existing.get("state") != "active":
-                    print(f"NOTE: '{rule['name']}' matches this file but its state in "
-                          f"Qodo is {existing.get('state')!r}, so it is not enforced.")
             else:
                 if not DRY_RUN:
                     update(rule, existing)
                 updated.append(rule["name"])
+            # Content can match while the rule is switched off in Qodo. For a gate
+            # rule (severity: error) that silently removes a merge blocker, so it
+            # fails the sync; anything else is reported. The sync doesn't
+            # reactivate it: someone deactivated it on purpose, so a person decides.
+            state = existing.get("state")
+            if state != "active":
+                msg = (f"'{rule['name']}' is {state!r} in Qodo, so it is not enforced — "
+                       f"reactivate it (qodo rules set-state) or remove the file")
+                if rule["severity"] == "error":
+                    failed.append((path.name, "gate rule " + msg))
+                else:
+                    print(f"NOTE: {msg}")
         except Exception as exc:
             failed.append((path.name, str(exc)))
 
