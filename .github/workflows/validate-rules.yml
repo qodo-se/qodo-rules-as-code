@@ -28,7 +28,12 @@ jobs:
       # No Qodo credentials here on purpose: PR code is untrusted, so this job
       # runs offline checks only.
       - name: Install PyYAML
-        run: pip install --quiet 'pyyaml==6.0.2'
+        # ubuntu-latest's system Python is externally managed (PEP 668), so a
+        # bare pip install fails. Use a venv and put it first on PATH.
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" install --quiet 'pyyaml==6.0.2'
+          echo "$RUNNER_TEMP/venv/bin" >> "$GITHUB_PATH"
 
       - name: Unit tests
         run: python3 -m unittest discover -s tests -v
